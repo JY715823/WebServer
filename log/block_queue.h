@@ -17,15 +17,6 @@
 // 使用模板，以后可以扩展日志内容的类型
 template <class T> 
 class block_queue{
-private: 
-    vector<T> m_q; // 环形数组
-    int m_size; // 当前元素数量
-    int m_maxSize; // 数组最大容量
-    int m_front,m_rear; // 队头，队尾
-    locker m_mtx; // 互斥锁保护临界区
-    cond m_cv; // 条件变量（用于唤醒消费者线程）
-    // ****** 条件变量:[ 只当队列为空时消费者阻塞，队列满的时候push失败直接返回false，采用同步日志 ]******
-
 public:
     // 构造函数
     block_queue(int maxSize = 1000);
@@ -53,6 +44,14 @@ public:
     // 出队（超时处理）;
     bool pop(T& item,int ms_timeout);
 
+private: 
+    vector<T> m_q; // 环形数组
+    int m_size; // 当前元素数量
+    int m_maxSize; // 数组最大容量
+    int m_front,m_rear; // 队头，队尾
+    locker m_mtx; // 互斥锁保护临界区
+    cond m_cv; // 条件变量（用于唤醒消费者线程）
+    // ****** 条件变量:[ 只当队列为空时消费者阻塞，队列满的时候push失败直接返回false，采用同步日志 ]******
 
 };
 
