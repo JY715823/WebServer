@@ -19,7 +19,7 @@ public:
     // ****** 启动异步日志工作线程:[ 作为桥接函数,具体见static函数的作用 ]******
     static void* start_log_thread(void* args);
     // ****** 对日志系统进行初始化:[ 可通过外部传参来控制相关参数,没有传参就使用默认参数 ]******
-    bool init(const char* file_name,int close_log,int log_buf_size = 8192,
+    bool init(const char* file_name,bool close_log,int log_buf_size = 8192,
                 int split_lines = 1000,int max_queue_size = 0);
     // ****** 日志系统核心:[ 将日志通过同步/异步的方式写入磁盘持久化 ]******
     void write_log(int level,const char* format,...);
@@ -44,12 +44,19 @@ private:
     long long m_count; // 日志行数记录
     int m_today; // 按天分日志,记录今天是哪一天
     FILE* m_fp; // 打开log文件的文件指针
-    int m_close_log; // 关闭日志标志位
+    bool m_close_log; // 关闭日志标志位
     // 异步日志相关
     pthread_t m_tid; // 异步日志线程号;
     block_queue<string>* m_q; // 阻塞队列
     bool m_is_async; // 异步标志位
     locker m_mtx; // 保护临界区
 };
+
+
+// 宏函数实现对外提供的统一函数
+#define LOG_DEBUG(format,...) Log::get_instance->write_log(0,format,##__VA_ARGS__);Log::get_instance->flush();
+#define LOG_INFO(format,...) Log::get_instance->write_log(1,format,##__VA_ARGS__);Log::get_instance->flush();
+#define LOG_WARN(format,...) Log::get_instance->write_log(2,format,##__VA_ARGS__);Log::get_instance->flush();
+#define LOG_ERROR(format,...) Log::get_instance->write_log(3,format,##__VA_ARGS__);Log::get_instance->flush();
 
 #endif

@@ -68,8 +68,11 @@ void Log::get_time(struct timeval& tv,struct tm& now){
 
 
 // ****** 对日志系统进行初始化:[ 可通过外部传参来控制相关参数,没有传参就使用默认参数 ]******
-bool Log::init(const char* file_name,int close_log,int log_buf_size,
+bool Log::init(const char* file_name,bool close_log,int log_buf_size,
             int split_lines,int max_queue_size){
+    // 记录是否开启日志
+    m_close_log = close_log;
+    if(m_close_log) return true;
     // 异步模式开关
     if(max_queue_size >= 1){
         // 开启异步模式
@@ -88,7 +91,7 @@ bool Log::init(const char* file_name,int close_log,int log_buf_size,
 
     // 保存配置,初始化缓冲区
     m_log_buf_size = log_buf_size;
-    m_close_log = close_log;
+    
     m_split_lines = split_lines;
 
     // 取当前日期
