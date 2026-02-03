@@ -10,6 +10,7 @@ block_queue<T>::block_queue(int maxSize){
     m_q.resize(m_maxSize);
     m_size = 0;
     m_front = m_rear = -1;
+    m_isStop = false;
 }
 // 析构函数
 template <class T>
@@ -95,6 +96,15 @@ bool block_queue<T>::rear(T& item){
     m_mtx.unlock();
     return true;
 }
+// 关闭阻塞队列
+template <class T>
+void block_queue<T>::close(){
+    m_mtx.lock();
+    m_isStop = true;
+    // 唤醒线程
+    m_cv.broadcast();
+    m_mtx.unlock();
+}
 
 
 // 入队（不阻塞）
@@ -126,11 +136,13 @@ bool block_queue<T>::pop(T& item){
     // 上锁
     m_mtx.lock();
     // 判断队空
-    while(m_size <= 0){
-        if(m_cv.wait(m_mtx.get())){
-            m_mtx.unlock();
-            return false;
-        }
+    while(m_size <= 0 && !m_isStop){
+        m_cv.wait(m_mtx.get());
+    }
+    // 判断是否终止——队列关闭且没有剩余内容
+    if(m_size <= 0 && m_isStop){
+        m_mtx.unlock();
+        return false;
     }
     // 进行出队
     m_front = (m_front + 1) % m_maxSize;
@@ -164,10 +176,12 @@ bool block_queue<T>::pop(T& item,int ms_timeout){
     }
     m_mtx.lock();
     while(m_size <= 0){
-        if(!m_cv.timeWait(m_mtx.get(),t)){
-            m_mtx_unlock();
-            return false;
-        }
+        m_cv.timeWait(m_mtx.get(),t);
+    }
+    // 判断是否终止——队列关闭且没有剩余内容
+    if(m_size <= 0 && m_isStop){
+        m_mtx.unlock();
+        return false;
     }
     // 进行出队
     m_front = (m_front + 1) % m_maxSize;

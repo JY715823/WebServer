@@ -36,6 +36,8 @@ public:
     bool front(T& item);
     // 获取队尾元素
     bool rear(T& item);
+    // 关闭阻塞队列
+    void close();
 
     // 入队（不阻塞）
     bool push(T item);
@@ -43,6 +45,7 @@ public:
     bool pop(T& item);
     // 出队（超时处理）;
     bool pop(T& item,int ms_timeout);
+
 
 private: 
     vector<T> m_q; // 环形数组
@@ -52,7 +55,8 @@ private:
     locker m_mtx; // 互斥锁保护临界区
     cond m_cv; // 条件变量（用于唤醒消费者线程）
     // ****** 条件变量:[ 只当队列为空时消费者阻塞，队列满的时候push失败直接返回false，采用同步日志 ]******
-
+    // ****** 新增成员:[ 阻塞队列结束标志 ]******
+    bool m_isStop;
 };
 
 #include "block_queue.tpp"
